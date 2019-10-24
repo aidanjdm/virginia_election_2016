@@ -10,6 +10,7 @@ from plotly.graph_objs import *
 ###### Import a dataframe #######
 df = pd.read_pickle('virginia_totals.pkl')
 options_list=list(df['jurisdiction'].value_counts().sort_index().index)
+options_list2 = ['Donald Trump', 'Hillary Clinton', 'Other']
 
 ########### Initiate the app
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -25,6 +26,11 @@ app.layout = html.Div([
         options=[{'label': i, 'value': i} for i in options_list],
         value=options_list[0]
     ),
+    dcc.Dropdown(
+        id='dropdown2',
+        options=[{'label': i, 'value': i} for i in options_list2],
+        value=options_list2[0]
+    ),
     html.Br(),
     dcc.Graph(id='display-value'),
     html.Br(),
@@ -36,29 +42,21 @@ app.layout = html.Div([
 
 ######### Interactive callbacks go here #########
 @app.callback(dash.dependencies.Output('display-value', 'figure'),
-              [dash.dependencies.Input('dropdown', 'value')])
-def juris_picker(juris_name):
+              [dash.dependencies.Input('dropdown', 'value'), dash.dependencies.Input('dropdown2', 'value')])
+def juris_picker(juris_name, candidate):
     juris_df=df[df['jurisdiction']==juris_name]
 
     mydata1 = go.Bar(x=list(juris_df['precinct'].value_counts().index),
-                     y=list(juris_df['votes']['Donald Trump']),
+                     y=list(juris_df['votes'][candidate]),
                      marker=dict(color='#122A7F'),
-                     name='Trump')
-    mydata2 = go.Bar(x=list(juris_df['precinct'].value_counts().index),
-                     y=list(juris_df['votes']['Hillary Clinton']),
-                     marker=dict(color='#f96800'),
-                     name='Clinton')
-    mydata3 = go.Bar(x=list(juris_df['precinct'].value_counts().index),
-                     y=list(juris_df['votes']['Other']),
-                     marker=dict(color='#009900'),
-                     name='Other')
+                     name=candidate)
 
     mylayout = go.Layout(
-        title='Votes by candidate for: {}'.format(juris_name),
+        title='Votes for {} candidate in: {}'.format(candidate, juris_name),
         xaxis=dict(title='Precincts'),
         yaxis=dict(title='Number of Votes')
     )
-    fig = go.Figure(data=[mydata1, mydata2, mydata3], layout=mylayout)
+    fig = go.Figure(data=[mydata1], layout=mylayout)
     return fig
 
 
